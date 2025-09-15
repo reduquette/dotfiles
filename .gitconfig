@@ -15,7 +15,5 @@
         format = ssh
 [dd-gitsign]
         username = reduquette
-# This is a url rewrite that helps [go and maybe rust] tooling that downloads libraries from our private repos
-[url "git@github.com:DataDog/"]
-        insteadOf = https://github.com/DataDog/
-
+[url "git@github.com:"]
+	insteadOf = https://github.com/
