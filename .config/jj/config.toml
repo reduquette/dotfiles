@@ -20,6 +20,3 @@ merge-tool-edits-conflict-markers = true
 [revset-aliases]
 "pr_head()" = "heads(trunk()..@ & tracked_remote_bookmarks())"
 "pr_base()" = "coalesce(heads(trunk()..pr_head()- & tracked_remote_bookmarks()), trunk())"
-
-[git]
-executable-path = "/opt/homebrew/bin/git"
