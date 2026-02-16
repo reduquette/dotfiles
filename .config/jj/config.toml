@@ -1,0 +1,25 @@
+#:schema https://docs.jj-vcs.dev/latest/config-schema.json
+[user]
+name = "Rachel Duquette"
+email = "rachel.duquette@datadoghq.com"
+
+[signing]
+behavior = "own"
+backend = "ssh"
+key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUtaJaU+aJp"
+
+
+[ui]
+merge-editor = "cursor"
+
+[merge-tools.cursor]
+merge-args = ["--wait", "--merge", "$left", "$right", "$base", "$output"]
+conflict-marker-style = "git"
+merge-tool-edits-conflict-markers = true
+
+[revset-aliases]
+"pr_head()" = "heads(trunk()..@ & tracked_remote_bookmarks())"
+"pr_base()" = "coalesce(heads(trunk()..pr_head()- & tracked_remote_bookmarks()), trunk())"
+
+[git]
+executable-path = "/opt/homebrew/bin/git"

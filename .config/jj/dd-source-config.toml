@@ -1,0 +1,8 @@
+#:schema https://docs.jj-vcs.dev/latest/config-schema.json
+
+[revset-aliases]
+"trunk()" = "main@origin"
+[fsmonitor]
+backend = "watchman"
+[fsmonitor.watchman]
+register-snapshot-trigger = true
