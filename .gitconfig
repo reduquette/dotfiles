@@ -8,11 +8,13 @@
         # This is an ssh key that can be used to sign your commits, it should
         # be made available to your workspace via ssh agent forwarding and can be
         # seen on your laptop by issuing `git config --global user.signingkey`
-        signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUtaJaU+aJp
+        signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUtaJaU+aJp
 [commit]
         gpgsign = true
 [gpg]
         format = ssh
+[gpg "ssh"]
+        program = dd-gitsign
 [dd-gitsign]
         username = reduquette
 [url "git@github.com:"]

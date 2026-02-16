@@ -18,22 +18,30 @@ find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_P
 
 echo "==> Installing linuxbrew (if needed) and tools (jj, watchman)"
 
-# Install linuxbrew if missing (pattern used in internal Workspaces docs) :contentReference[oaicite:5]{index=5}
+# Install linuxbrew if missing
 if ! command -v brew >/dev/null 2>&1; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-  test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bashrc
 fi
 
-# Ensure brew is on PATH for this session
-eval "$("$(brew --prefix)"/bin/brew shellenv)"
+# Ensure brew is on PATH for this session (try common locations)
+if ! command -v brew >/dev/null 2>&1; then
+  test -d /opt/homebrew && eval "$(/opt/homebrew/bin/brew shellenv)"
+  test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+  test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
-brew install jj watchman
+# Add brew to shell config for zsh
+if command -v brew >/dev/null 2>&1; then
+  BREW_INIT="eval \"\$($(brew --prefix)/bin/brew shellenv)\""
+  grep -qxF "$BREW_INIT" ~/.zshrc 2>/dev/null || echo "$BREW_INIT" >> ~/.zshrc
+fi
+
+# Install common dev tools
+brew install jj watchman tmux
 
 echo "==> Configuring dd-source repository (if present)"
 
-# Apply dd-source-specific jj config to ~/dd/dd-source
+# Apply dd-source-specific config to ~/dd/dd-source
 DD_SOURCE_PATH="$HOME/dd/dd-source"
 if [ -d "$DD_SOURCE_PATH/.git" ]; then
   # Initialize jj if not already colocated with git
@@ -44,7 +52,7 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
     echo "   jj already initialized in dd-source"
   fi
 
-  # Apply dd-source-specific config
+  # Apply dd-source-specific jj config
   DD_SOURCE_CONFIG="$DD_SOURCE_PATH/.jj/repo/config.toml"
   mkdir -p "$(dirname "$DD_SOURCE_CONFIG")"
 
@@ -54,8 +62,31 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
   else
     echo "   Warning: dd-source-config.toml not found in dotfiles"
   fi
+
+  # Configure dd-source git hooks
+  echo "   Configuring dd-source git hooks"
+  (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gazelle true)
+  (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gofmt true)
 else
   echo "   dd-source repository not found at $DD_SOURCE_PATH (skipping)"
+fi
+
+echo "==> Configuring tmux auto-attach for SSH sessions"
+
+# Add tmux auto-attach to .zshrc
+ZSHRC="$HOME/.zshrc"
+TMUX_BLOCK='
+# Auto-start/attach tmux for interactive SSH sessions
+if [ -n "$SSH_CONNECTION" ] && [ -z "$TMUX" ] && [ -z "$NO_TMUX" ]; then
+ exec tmux new-session -A -s work
+fi
+'
+
+if ! grep -Fq 'exec tmux new-session -A -s work' "$ZSHRC" 2>/dev/null; then
+  printf "\n%s\n" "$TMUX_BLOCK" >> "$ZSHRC"
+  echo "   Added tmux auto-attach block to $ZSHRC"
+else
+  echo "   tmux auto-attach block already present in $ZSHRC"
 fi
 
 echo "==> Done. You may need to restart your shell/terminal for PATH changes to take effect." :contentReference[oaicite:6]{index=6}
