@@ -67,6 +67,16 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
   echo "   Configuring dd-source git hooks"
   (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gazelle true)
   (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gofmt true)
+
+  # Fetch and track personal bookmarks
+  JJ_USER_PREFIX="rachel.duquette"
+  echo "   Fetching and tracking bookmarks for $JJ_USER_PREFIX"
+  (
+    cd "$DD_SOURCE_PATH"
+    jj git fetch --bookmark "$JJ_USER_PREFIX/*"
+    jj git import
+    jj bookmark track "glob:$JJ_USER_PREFIX/**@origin" 2>/dev/null || true
+  )
 else
   echo "   dd-source repository not found at $DD_SOURCE_PATH (skipping)"
 fi
