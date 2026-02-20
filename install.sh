@@ -18,12 +18,23 @@ find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_P
 
 echo "==> Installing linuxbrew (if needed) and tools (jj, watchman)"
 
-# Suppress ~/.gitconfig and /etc/gitconfig for all Homebrew git operations.
-# Without this, the [url "git@github.com:"] insteadOf rewrite converts
-# HTTPS → SSH, which fails when no SSH key is available. This must cover
-# the initial clone AND the installer's internal `brew update --force`.
-export GIT_CONFIG_GLOBAL=/dev/null
-export GIT_CONFIG_SYSTEM=/dev/null
+# The [url "git@github.com:"] insteadOf rewrite in ~/.gitconfig converts
+# HTTPS → SSH, which fails when no SSH key is available. The Homebrew
+# installer runs `brew update --force` through sudo, stripping env vars
+# like GIT_CONFIG_GLOBAL, so we must remove the rewrite from the file
+# itself. A trap ensures it's restored even if the script fails midway.
+_BREW_HAD_INSTEADOF=""
+if git config --global --get 'url.git@github.com:.insteadOf' &>/dev/null; then
+  _BREW_HAD_INSTEADOF=1
+  git config --global --unset-all 'url.git@github.com:.insteadOf'
+fi
+_restore_git_insteadof() {
+  if [ -n "$_BREW_HAD_INSTEADOF" ]; then
+    git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'
+  fi
+}
+trap _restore_git_insteadof EXIT
+
 export HOMEBREW_INSTALL_FROM_API=1
 export HOMEBREW_NO_AUTO_UPDATE=1
 
@@ -62,9 +73,9 @@ fi
 # Install common dev tools
 brew install jj watchman tmux fzf
 
-# Restore normal git config behavior for the rest of the script
-unset GIT_CONFIG_GLOBAL
-unset GIT_CONFIG_SYSTEM
+# Restore the SSH URL rewrite now that Homebrew is set up
+_restore_git_insteadof
+trap - EXIT
 
 echo "==> Configuring fzf shell integration"
 
