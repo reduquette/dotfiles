@@ -18,11 +18,12 @@ find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_P
 
 echo "==> Installing linuxbrew (if needed) and tools (jj, watchman)"
 
-# These two env vars prevent Homebrew from using git to clone/fetch tap
-# repositories. Without them, the [url] rewrite in .gitconfig converts
-# https://github.com/ → git@github.com:, which fails if no SSH key is
-# present yet. HOMEBREW_NO_AUTO_UPDATE also stops brew from trying to
-# auto-update (another git operation) when running `brew install`.
+# Suppress ~/.gitconfig and /etc/gitconfig for all Homebrew git operations.
+# Without this, the [url "git@github.com:"] insteadOf rewrite converts
+# HTTPS → SSH, which fails when no SSH key is available. This must cover
+# the initial clone AND the installer's internal `brew update --force`.
+export GIT_CONFIG_GLOBAL=/dev/null
+export GIT_CONFIG_SYSTEM=/dev/null
 export HOMEBREW_INSTALL_FROM_API=1
 export HOMEBREW_NO_AUTO_UPDATE=1
 
@@ -60,6 +61,10 @@ fi
 
 # Install common dev tools
 brew install jj watchman tmux fzf
+
+# Restore normal git config behavior for the rest of the script
+unset GIT_CONFIG_GLOBAL
+unset GIT_CONFIG_SYSTEM
 
 echo "==> Configuring fzf shell integration"
 
@@ -149,4 +154,4 @@ fi
 add_tmux_block "$HOME/.zshrc"
 add_tmux_block "$HOME/.bashrc"
 
-echo "==> Done. You may need to restart your shell/terminal for PATH changes to take effect." :contentReference[oaicite:6]{index=6}
+echo "==> Done. You may need to restart your shell/terminal for PATH changes to take effect."
