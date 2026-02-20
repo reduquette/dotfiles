@@ -109,15 +109,17 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
   (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gazelle true)
   (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gofmt true)
 
-  # Fetch and track personal bookmarks
+  # Fetch and track personal bookmarks (requires SSH key, which may not
+  # be available yet during initial provisioning)
   JJ_USER_PREFIX="rachel.duquette"
   echo "   Fetching and tracking bookmarks for $JJ_USER_PREFIX"
-  (
-    cd "$DD_SOURCE_PATH"
-    jj git fetch --bookmark "$JJ_USER_PREFIX/*"
-    jj git import
-    jj bookmark track "glob:$JJ_USER_PREFIX/**@origin" 2>/dev/null || true
-  )
+  if (cd "$DD_SOURCE_PATH" && jj git fetch --bookmark "$JJ_USER_PREFIX/*" 2>&1); then
+    (cd "$DD_SOURCE_PATH" && jj git import)
+    (cd "$DD_SOURCE_PATH" && jj bookmark track "glob:$JJ_USER_PREFIX/**@origin" 2>/dev/null || true)
+  else
+    echo "   Skipped: SSH key not available yet. Run this later to fetch bookmarks:"
+    echo "     cd $DD_SOURCE_PATH && jj git fetch --bookmark '$JJ_USER_PREFIX/*' && jj git import"
+  fi
 else
   echo "   dd-source repository not found at $DD_SOURCE_PATH (skipping)"
 fi
