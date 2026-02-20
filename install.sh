@@ -18,7 +18,14 @@ find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_P
 
 echo "==> Installing linuxbrew (if needed) and tools (jj, watchman)"
 
-# Install linuxbrew if missing
+# These two env vars prevent Homebrew from using git to clone/fetch tap
+# repositories. Without them, the [url] rewrite in .gitconfig converts
+# https://github.com/ → git@github.com:, which fails if no SSH key is
+# present yet. HOMEBREW_NO_AUTO_UPDATE also stops brew from trying to
+# auto-update (another git operation) when running `brew install`.
+export HOMEBREW_INSTALL_FROM_API=1
+export HOMEBREW_NO_AUTO_UPDATE=1
+
 if ! command -v brew >/dev/null 2>&1; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
