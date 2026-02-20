@@ -73,10 +73,6 @@ fi
 # Install common dev tools
 brew install jj watchman tmux fzf
 
-# Restore the SSH URL rewrite now that Homebrew is set up
-_restore_git_insteadof
-trap - EXIT
-
 echo "==> Configuring fzf shell integration"
 
 FZF_ZSH_INIT='source <(fzf --zsh)'
