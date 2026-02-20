@@ -3,6 +3,12 @@ set -euo pipefail
 
 DOTFILES_PATH="$HOME/dotfiles"
 
+# Restore SSH agent access when running through sudo/su (which strips
+# SSH_AUTH_SOCK). The workspace keeps a stable symlink to the real socket.
+if [ -z "${SSH_AUTH_SOCK:-}" ] && [ -S "$HOME/.ssh/ssh_auth_sock" ]; then
+  export SSH_AUTH_SOCK="$HOME/.ssh/ssh_auth_sock"
+fi
+
 echo "==> Symlinking dotfiles from $DOTFILES_PATH into $HOME"
 
 # Symlink all dotfiles paths (".*" and ".config/...", etc) into $HOME.
