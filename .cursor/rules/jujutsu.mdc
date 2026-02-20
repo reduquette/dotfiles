@@ -1,0 +1,38 @@
+---
+description: Use jujutsu (jj) instead of git for all version control operations
+alwaysApply: true
+---
+
+# Version Control: Jujutsu (jj)
+
+This project uses **jujutsu (jj)** instead of git. Always use `jj` commands for version control.
+
+## Command reference
+
+| Instead of | Use |
+|---|---|
+| `git status` | `jj status` |
+| `git diff` | `jj diff` |
+| `git log` | `jj log` |
+| `git show` | `jj show` |
+| `git add` + `git commit` | `jj commit -m "…"` |
+| `git commit --amend` | `jj describe -m "…"` |
+| `git branch` | `jj bookmark list` |
+| `git checkout -b` | `jj new` + `jj bookmark set <name>` |
+| `git push` | `jj git push` |
+| `git fetch` | `jj git fetch` |
+| `git rebase` | `jj rebase` |
+
+## Key differences from git
+
+- **No staging area.** All working copy changes are part of the current change.
+- Use **change IDs** (short letter sequences like `qpvuntsm`), not SHA hashes.
+- `jj new` creates a new empty change on top of the current one.
+- `jj describe -m "msg"` sets the current change's description.
+- `jj commit -m "msg"` = describe + create new empty change on top.
+- **Bookmarks** are jj's branches. Use `jj bookmark set <name>` to name a change.
+
+## Exceptions
+
+- `gh` CLI for GitHub operations (PRs, issues) is fine.
+- `git grep` or `rg` for code search is fine.
