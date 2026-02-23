@@ -79,6 +79,18 @@ fi
 # Install common dev tools
 brew install jj watchman tmux fzf
 
+# Symlink brew-installed tools into ~/.local/bin so they're available in
+# non-interactive shells (e.g. the Cursor agent shell, which doesn't source
+# .zshrc/.bashrc and therefore misses brew's PATH additions).
+mkdir -p "$HOME/.local/bin"
+for tool in jj watchman tmux fzf; do
+  tool_path="$(brew --prefix)/bin/$tool"
+  if [ -x "$tool_path" ] && [ ! -e "$HOME/.local/bin/$tool" ]; then
+    ln -sf "$tool_path" "$HOME/.local/bin/$tool"
+    echo "   Symlinked $tool into ~/.local/bin"
+  fi
+done
+
 echo "==> Configuring fzf shell integration"
 
 FZF_ZSH_INIT='source <(fzf --zsh)'

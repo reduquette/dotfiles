@@ -17,8 +17,6 @@
         program = dd-gitsign
 [dd-gitsign]
         username = reduquette
-[url "git@github.com:"]
-	insteadOf = https://github.com/
 [alias]
 	cane = commit --amend --no-edit
         pushf = push --force-with-lease
@@ -41,3 +39,5 @@
 	sort = -committerdate
 [merge]
 	conflictstyle = zdiff3
+[url "git@github.com:"]
+	insteadOf = https://github.com/
