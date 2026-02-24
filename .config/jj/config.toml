@@ -13,6 +13,9 @@ key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUta
 merge-editor = "cursor"
 
 [merge-tools.cursor]
+# Use wrapper to fix "Unable to connect to VS Code server" (ENOENT socket) in Cursor Remote/SSH
+# Wrapper from dotfiles; install.sh symlinks it to ~/.local/bin (in PATH)
+program = "cursor-merge-wrapper"
 merge-args = ["--wait", "--merge", "$left", "$right", "$base", "$output"]
 conflict-marker-style = "git"
 merge-tool-edits-conflict-markers = true

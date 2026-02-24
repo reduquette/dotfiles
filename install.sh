@@ -11,9 +11,9 @@ fi
 
 echo "==> Symlinking dotfiles from $DOTFILES_PATH into $HOME"
 
-# Symlink all dotfiles paths (".*" and ".config/...", etc) into $HOME.
+# Symlink all dotfiles paths (".*", ".config/...", ".local/bin/...") into $HOME.
 # This is essentially the same idea as the template approach (find + ln -sf).
-find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_PATH/.config/*" \) \
+find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_PATH/.config/*" -o -path "$DOTFILES_PATH/.local/bin/*" \) \
   ! -path "$DOTFILES_PATH/.git/*" \
   ! -name "install.sh" \
 | while read -r df; do
@@ -55,12 +55,15 @@ if ! command -v brew >/dev/null 2>&1; then
   test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-# Add brew to shell configs
+# Add brew and ~/.local/bin to shell configs
 if command -v brew >/dev/null 2>&1; then
   BREW_INIT="eval \"\$($(brew --prefix)/bin/brew shellenv)\""
   grep -qxF "$BREW_INIT" ~/.zshrc 2>/dev/null || echo "$BREW_INIT" >> ~/.zshrc
   grep -qxF "$BREW_INIT" ~/.bashrc 2>/dev/null || echo "$BREW_INIT" >> ~/.bashrc
 fi
+LOCAL_BIN_PATH='export PATH="$HOME/.local/bin:$PATH"'
+grep -qxF "$LOCAL_BIN_PATH" ~/.zshrc 2>/dev/null || echo "$LOCAL_BIN_PATH" >> ~/.zshrc
+grep -qxF "$LOCAL_BIN_PATH" ~/.bashrc 2>/dev/null || echo "$LOCAL_BIN_PATH" >> ~/.bashrc
 
 # Ensure ~/.bash_profile sources ~/.bashrc (macOS bash login shells skip .bashrc)
 BASH_SOURCE_BLOCK='
@@ -100,9 +103,13 @@ grep -qxF "$FZF_BASH_INIT" ~/.bashrc 2>/dev/null || echo "$FZF_BASH_INIT" >> ~/.
 
 echo "==> Configuring dd-source repository (if present)"
 
-# Apply dd-source-specific config to ~/dd/dd-source
-DD_SOURCE_PATH="$HOME/dd/dd-source"
-if [ -d "$DD_SOURCE_PATH/.git" ]; then
+# Find dd-source: check DD_SOURCE_PATH env var, then common locations
+for _candidate in "${DD_SOURCE_PATH:-}" "$HOME/dd/dd-source" "$HOME/go/src/github.com/DataDog/dd-source"; do
+  [ -n "$_candidate" ] && [ -d "$_candidate/.git" ] && DD_SOURCE_PATH="$_candidate" && break
+done
+unset _candidate 2>/dev/null || true
+
+if [ -n "${DD_SOURCE_PATH:-}" ] && [ -d "$DD_SOURCE_PATH/.git" ]; then
   # Initialize jj if not already colocated with git
   if [ ! -d "$DD_SOURCE_PATH/.jj" ]; then
     echo "   Initializing jj in dd-source repository"
@@ -111,13 +118,17 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
     echo "   jj already initialized in dd-source"
   fi
 
-  # Apply dd-source-specific jj config
-  DD_SOURCE_CONFIG="$DD_SOURCE_PATH/.jj/repo/config.toml"
-  mkdir -p "$(dirname "$DD_SOURCE_CONFIG")"
-
+  # Apply dd-source-specific jj config to the path jj actually uses
+  # (jj stores repo config in ~/.config/jj/repos/<id>/config.toml, not in .jj/repo/)
   if [ -f "$DOTFILES_PATH/.config/jj/dd-source-config.toml" ]; then
-    cp "$DOTFILES_PATH/.config/jj/dd-source-config.toml" "$DD_SOURCE_CONFIG"
-    echo "   Applied dd-source jj config to $DD_SOURCE_CONFIG"
+    JJ_REPO_CONFIG="$(cd "$DD_SOURCE_PATH" && jj config path --repo 2>/dev/null)"
+    if [ -n "$JJ_REPO_CONFIG" ]; then
+      mkdir -p "$(dirname "$JJ_REPO_CONFIG")"
+      cp "$DOTFILES_PATH/.config/jj/dd-source-config.toml" "$JJ_REPO_CONFIG"
+      echo "   Applied dd-source jj config to $JJ_REPO_CONFIG"
+    else
+      echo "   Warning: could not determine jj repo config path (jj config path --repo failed)"
+    fi
   else
     echo "   Warning: dd-source-config.toml not found in dotfiles"
   fi
@@ -139,7 +150,7 @@ if [ -d "$DD_SOURCE_PATH/.git" ]; then
     echo "     cd $DD_SOURCE_PATH && jj git fetch --bookmark '$JJ_USER_PREFIX/*' && jj git import"
   fi
 else
-  echo "   dd-source repository not found at $DD_SOURCE_PATH (skipping)"
+  echo "   dd-source repository not found (skipping; set DD_SOURCE_PATH or use ~/dd/dd-source or ~/go/src/github.com/DataDog/dd-source)"
 fi
 
 echo "==> Deploying Cursor rules to project directories"

@@ -25,6 +25,8 @@ This project uses **jujutsu (jj)** instead of git. Always use `jj` commands for 
 | `git diff` | `jj diff` | |
 | `git diff --staged` | N/A | No staging area; `jj diff` shows current change |
 | `git log` | `jj log` | |
+| `git log` (branch only) | `jj log -r 'trunk()..@'` | Commits on your local branch, not on main |
+| `git log` (PR view) | `jj log -r 'trunk()..<branch>@origin'` | Commits on remote branch (matches GitHub PR) |
 | `git show` | `jj show` | |
 | `git add` + `git commit` | `jj commit -m "…"` | Shorthand for `jj describe -m "…" && jj new` |
 | `git commit --amend` | `jj squash` | Squashes current change into its parent |
@@ -35,8 +37,8 @@ This project uses **jujutsu (jj)** instead of git. Always use `jj` commands for 
 | `git push` | `jj git push` | Force-pushes by default (like `--force-with-lease`) |
 | `git push -u origin branch` | `jj git push --named=<prefix>/<name>=@-` | First push: creates bookmark + pushes |
 | `git fetch` | `git fetch origin` | Prefer plain `git fetch` in colocated repos — it respects `remote.fetch` config and is faster than `jj git fetch` |
-| `git pull --rebase` | `git fetch origin && jj rebase --skip-emptied -s 'all:roots(immutable_heads()..@)' -d 'trunk()'` | No `jj pull` equivalent |
-| `git rebase -i main` | `jj rebase --skip-emptied -s 'all:roots(immutable_heads()..@)' -d 'trunk()'` | |
+| `git pull --rebase` | `git fetch origin && jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'` | No `jj pull` equivalent |
+| `git rebase -i main` | `jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'` | |
 | `git rebase --continue` | N/A | Conflicts are non-blocking; resolve with `jj new <conflicted> && jj resolve && jj squash` |
 | `git stash` | N/A | Not needed — switch changes freely at any time |
 | `git merge A B` | `jj new A B` | Creates a change with multiple parents |
@@ -100,14 +102,14 @@ jj git push -r 'immutable_heads()..(@::)'
 
 ```shell
 git fetch origin
-jj rebase --skip-emptied -s 'all:roots(immutable_heads()..@)' -d 'trunk()'
+jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'
 ```
 
 ### After a PR is merged
 
 ```shell
 git fetch origin
-jj rebase --skip-emptied -s 'all:roots(immutable_heads()..visible_heads())' -d 'trunk()'
+jj rebase --skip-emptied -s 'roots(immutable_heads()..visible_heads())' -d 'trunk()'
 jj git push -r 'immutable_heads()..visible_heads()'
 ```
 

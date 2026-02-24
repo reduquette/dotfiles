@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Wrapper for Cursor merge tool that fixes "Unable to connect to VS Code server" (ENOENT socket)
+# when jj resolve is run in Cursor Remote/SSH. Sets VSCODE_IPC_HOOK_CLI to an active socket.
+set -e
+
+CURSOR_BIN="$(command -v cursor 2>/dev/null || true)"
+if [[ -z "$CURSOR_BIN" ]]; then
+  CURSOR_BIN=$(find "${HOME}/.cursor-server" -name cursor -path '*/remote-cli/*' 2>/dev/null | head -1)
+fi
+
+# Use existing valid socket if available, otherwise find the most recent one
+if [[ -S "${VSCODE_IPC_HOOK_CLI:-}" ]]; then
+  export VSCODE_IPC_HOOK_CLI
+else
+  SOCKET=$(ls -t /tmp/vscode-ipc-*.sock 2>/dev/null | head -1)
+  if [[ -n "$SOCKET" && -S "$SOCKET" ]]; then
+    export VSCODE_IPC_HOOK_CLI="$SOCKET"
+  fi
+fi
+
+exec "$CURSOR_BIN" "$@"

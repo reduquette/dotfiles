@@ -2,6 +2,9 @@
 
 [revset-aliases]
 "trunk()" = "main@origin"
+# Only trunk and tags are immutable; exclude untracked remote bookmarks
+# so rebases can include commits on staging/integration branches
+"immutable_heads()" = "trunk() | tags()"
 
 [fsmonitor]
 backend = "watchman"
