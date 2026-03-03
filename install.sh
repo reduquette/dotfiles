@@ -22,7 +22,7 @@ find "$DOTFILES_PATH" -type f \( -path "$DOTFILES_PATH/.*" -o -path "$DOTFILES_P
     ln -sf "$df" "$link"
   done
 
-echo "==> Installing linuxbrew (if needed) and tools (jj, watchman)"
+echo "==> Installing linuxbrew (if needed) and tools (jj, watchman, tmux, fzf, orgstore, ddtool)"
 
 # The [url "git@github.com:"] insteadOf rewrite in ~/.gitconfig converts
 # HTTPS → SSH, which fails when no SSH key is available. The Homebrew
@@ -80,13 +80,16 @@ else
 fi
 
 # Install common dev tools
-brew install jj watchman tmux fzf
+brew tap datadog/tap git@github.com:DataDog/homebrew-tap 2>/dev/null || brew tap datadog/tap 2>/dev/null || true
+brew update
+brew upgrade datadog/tap/atlas 2>/dev/null || brew install datadog/tap/atlas 2>/dev/null || true
+brew install jj watchman tmux fzf orgstore datadog/tap/ddtool
 
 # Symlink brew-installed tools into ~/.local/bin so they're available in
 # non-interactive shells (e.g. the Cursor agent shell, which doesn't source
 # .zshrc/.bashrc and therefore misses brew's PATH additions).
 mkdir -p "$HOME/.local/bin"
-for tool in jj watchman tmux fzf; do
+for tool in jj watchman tmux fzf orgstore ddtool; do
   tool_path="$(brew --prefix)/bin/$tool"
   if [ -x "$tool_path" ] && [ ! -e "$HOME/.local/bin/$tool" ]; then
     ln -sf "$tool_path" "$HOME/.local/bin/$tool"
@@ -100,6 +103,20 @@ FZF_ZSH_INIT='source <(fzf --zsh)'
 FZF_BASH_INIT='eval "$(fzf --bash)"'
 grep -qxF "$FZF_ZSH_INIT" ~/.zshrc 2>/dev/null || echo "$FZF_ZSH_INIT" >> ~/.zshrc
 grep -qxF "$FZF_BASH_INIT" ~/.bashrc 2>/dev/null || echo "$FZF_BASH_INIT" >> ~/.bashrc
+
+echo "==> Configuring ddtool (credential helpers & kubeconfig context switcher)"
+
+# Install ddtool credential helpers for kubectl/orgstore auth, and dctx for
+# KUBECONFIG context management. Avoids "context was not found" when using
+# orgstore toolbox from SSH workspaces. See: https://datadoghq.atlassian.net/wiki/spaces/ENG/pages/2396684402/ddtool
+_DDTOOL_BIN="$(brew --prefix 2>/dev/null)/bin/ddtool"
+if [ -x "${_DDTOOL_BIN}" ]; then
+  "${_DDTOOL_BIN}" auth helpers install 2>/dev/null || echo "   Skipped ddtool auth helpers (may need VPN/AppGate)"
+  "${_DDTOOL_BIN}" clusters context install-dctx 2>/dev/null || echo "   Skipped ddtool install-dctx (may need VPN/AppGate)"
+else
+  echo "   ddtool not found (skipping credential helpers)"
+fi
+unset _DDTOOL_BIN 2>/dev/null || true
 
 echo "==> Configuring dd-source repository (if present)"
 

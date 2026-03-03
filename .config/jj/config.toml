@@ -11,7 +11,7 @@ key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUta
 
 [ui]
 merge-editor = "cursor"
-
+paginate = "never"
 [merge-tools.cursor]
 # Use wrapper to fix "Unable to connect to VS Code server" (ENOENT socket) in Cursor Remote/SSH
 # Wrapper from dotfiles; install.sh symlinks it to ~/.local/bin (in PATH)
@@ -19,6 +19,10 @@ program = "cursor-merge-wrapper"
 merge-args = ["--wait", "--merge", "$left", "$right", "$base", "$output"]
 conflict-marker-style = "git"
 merge-tool-edits-conflict-markers = true
+
+[revsets]
+# Show trunk + your branch + @'s non-merge descendants (your stack, excluding staging merges)
+log = "trunk() | (trunk()..@) | @ | (descendants(@, 10) ~ merges())"
 
 [revset-aliases]
 "pr_head()" = "heads(trunk()..@ & tracked_remote_bookmarks())"

@@ -8,11 +8,25 @@ if [[ -z "$CURSOR_BIN" ]]; then
   CURSOR_BIN=$(find "${HOME}/.cursor-server" -name cursor -path '*/remote-cli/*' 2>/dev/null | head -1)
 fi
 
-# Use existing valid socket if available, otherwise find the most recent one
-if [[ -S "${VSCODE_IPC_HOOK_CLI:-}" ]]; then
+# Use existing valid socket if available, otherwise find the most recent one with an active listener.
+# Stale sockets (ECONNREFUSED) happen when Cursor restarts; filter them out via lsof.
+pick_valid_socket() {
+  for s in $(ls -t /tmp/vscode-ipc-*.sock 2>/dev/null); do
+    [[ -S "$s" ]] || continue
+    if command -v lsof &>/dev/null && lsof "$s" &>/dev/null; then
+      echo "$s"
+      return
+    fi
+    # No lsof: assume most recent is valid (original behavior)
+    echo "$s"
+    return
+  done
+}
+
+if [[ -S "${VSCODE_IPC_HOOK_CLI:-}" ]] && { ! command -v lsof &>/dev/null || lsof "${VSCODE_IPC_HOOK_CLI}" &>/dev/null; }; then
   export VSCODE_IPC_HOOK_CLI
 else
-  SOCKET=$(ls -t /tmp/vscode-ipc-*.sock 2>/dev/null | head -1)
+  SOCKET=$(pick_valid_socket)
   if [[ -n "$SOCKET" && -S "$SOCKET" ]]; then
     export VSCODE_IPC_HOOK_CLI="$SOCKET"
   fi
