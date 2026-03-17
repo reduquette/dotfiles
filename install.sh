@@ -7,7 +7,12 @@ ARCH="$(uname -m)"
 
 
 # Symlink dotfiles into $HOME (only files whose paths start with ".")
-find "$DOTFILES_PATH" -type f -path "$DOTFILES_PATH/.*" |
+find "$DOTFILES_PATH" -type f -path "$DOTFILES_PATH/.*" \
+  -not -path "$DOTFILES_PATH/.git/*" \
+  -not -path "$DOTFILES_PATH/.jj/*" \
+  -not -path "$DOTFILES_PATH/.claude/*" \
+  -not -name .DS_Store \
+  -not -name .gitignore |
 while read -r df; do
   link=${df/$DOTFILES_PATH/$HOME}
   mkdir -p "$(dirname "$link")"
@@ -18,28 +23,44 @@ mkdir -p "$HOME/.local/bin"
 
 
 # ---------------------------------------------------------------------------
-# Tool installation — platform-specific
+# Tool installation
 # ---------------------------------------------------------------------------
+
+# starpls: Starlark LSP (not available via Homebrew)
+install_starpls() {
+  if command -v starpls >/dev/null 2>&1; then
+    echo "   starpls already installed"
+    return
+  fi
+  echo "   Installing starpls from GitHub releases"
+  case "$OS-$ARCH" in
+    Darwin-arm64)   _STARPLS_ASSET="starpls-darwin-arm64" ;;
+    Darwin-x86_64)  _STARPLS_ASSET="starpls-darwin-amd64" ;;
+    Linux-x86_64)   _STARPLS_ASSET="starpls-linux-amd64" ;;
+    Linux-aarch64)  _STARPLS_ASSET="starpls-linux-aarch64" ;;
+    *)              _STARPLS_ASSET="" ;;
+  esac
+  if [ -z "$_STARPLS_ASSET" ]; then
+    echo "   Warning: unsupported platform $OS-$ARCH for starpls"
+    return
+  fi
+  _STARPLS_TAG=$(curl -fsSI "https://github.com/withered-magic/starpls/releases/latest" 2>/dev/null \
+    | grep -i '^location:' | sed 's|.*/||' | tr -d '\r\n')
+  if [ -n "$_STARPLS_TAG" ]; then
+    curl -fsSL "https://github.com/withered-magic/starpls/releases/download/${_STARPLS_TAG}/${_STARPLS_ASSET}.tar.gz" \
+      | tar xz -C "$HOME/.local/bin" starpls 2>/dev/null \
+      && chmod +x "$HOME/.local/bin/starpls" \
+      && echo "   Installed starpls ${_STARPLS_TAG}" \
+      || echo "   Warning: failed to download starpls"
+  else
+    echo "   Warning: could not determine latest starpls release"
+  fi
+}
+
+# Platform-specific
 
 install_tools_macos() {
   echo "==> Installing tools via Homebrew (macOS)"
-
-  # The [url "git@github.com:"] insteadOf rewrite in ~/.gitconfig converts
-  # HTTPS → SSH, which fails when no SSH key is available. The Homebrew
-  # installer runs `brew update --force` through sudo, stripping env vars
-  # like GIT_CONFIG_GLOBAL, so we must remove the rewrite from the file
-  # itself. A trap ensures it's restored even if the script fails midway.
-  _BREW_HAD_INSTEADOF=""
-  if git config --global --get 'url.git@github.com:.insteadOf' &>/dev/null; then
-    _BREW_HAD_INSTEADOF=1
-    git config --global --unset-all 'url.git@github.com:.insteadOf'
-  fi
-  _restore_git_insteadof() {
-    if [ -n "$_BREW_HAD_INSTEADOF" ]; then
-      git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'
-    fi
-  }
-  trap _restore_git_insteadof EXIT
 
   export HOMEBREW_INSTALL_FROM_API=1
   export HOMEBREW_NO_AUTO_UPDATE=1
@@ -58,7 +79,7 @@ install_tools_macos() {
 
   # Symlink brew tools into ~/.local/bin so they're available in
   # non-interactive shells (e.g. Cursor extension host, agent shell).
-  for tool in jj watchman tmux fzf orgstore ddtool atlas buildifier bzl starpls; do
+  for tool in jj watchman tmux fzf orgstore ddtool atlas buildifier bzl; do
     tool_path="$(brew --prefix)/bin/$tool"
     if [ -x "$tool_path" ] && [ ! -e "$HOME/.local/bin/$tool" ]; then
       ln -sf "$tool_path" "$HOME/.local/bin/$tool"
@@ -144,6 +165,8 @@ else
   install_tools_linux
 fi
 
+install_starpls
+
 
 echo "==> Configuring shell init"
 
@@ -207,8 +230,8 @@ if [ -n "${DD_SOURCE_PATH:-}" ] && [ -d "$DD_SOURCE_PATH/.git" ]; then
 
   # Configure dd-source git hooks
   echo "   Configuring dd-source git hooks"
-  (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gazelle true)
-  (cd "$DD_SOURCE_PATH" && git config --local --add ddsource.hooks.pre-push.gofmt true)
+  (cd "$DD_SOURCE_PATH" && git config --local ddsource.hooks.pre-push.gazelle true)
+  (cd "$DD_SOURCE_PATH" && git config --local ddsource.hooks.pre-push.gofmt true)
 
   # Fetch and track personal bookmarks (requires SSH key)
   JJ_USER_PREFIX="$(git config --global user.email | cut -d@ -f1)"
@@ -243,6 +266,19 @@ deploy_cursor_rules() {
 deploy_cursor_rules "${DD_SOURCE_PATH:-}"
 # Add more project directories here as needed:
 # deploy_cursor_rules "$HOME/other-project"
+
+
+# Enable HTTPS → SSH rewrite for GitHub once SSH is available.
+# This is not in .gitconfig because install.sh runs during workspace
+# provisioning before SSH keys are forwarded.
+echo "==> Configuring git SSH rewrite"
+if ssh -T git@github.com 2>&1 | grep -qi "successfully authenticated"; then
+  git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'
+  echo "   Enabled HTTPS → SSH rewrite for github.com"
+else
+  echo "   SSH to GitHub not available yet. To enable later:"
+  echo "     git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'"
+fi
 
 
 echo "==> Done"

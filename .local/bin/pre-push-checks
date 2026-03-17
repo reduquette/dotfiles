@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+echo "==> Running pre-push formatting"
+bzl run @//tools/format:format_bazel
+bzl run //:gazelle-update-repos
+bzl run //:go -- mod tidy
+bzl run //rules/go/dd_go_package/tests:transitive_third_party_update
+bzl run //third_party/go:mod_graph_update
+bzl run //:gazelle
+bzl run //tools/format:format_gci
+
+# Squash any formatting changes into the parent (the commit being pushed)
+if [ -n "$(jj diff --stat 2>/dev/null)" ]; then
+  echo "==> Squashing formatting changes into @-"
+  jj squash
+fi
+
+echo "==> Running tests"
+bzl test //domains/aaa/apps/apis/governance-jobs:all --test_output=all
+bzl test //domains/aaa/apps/apis/admin-front-door:all --test_output=all
+bzl test //domains/aaa/libs/governance:all --test_output=all
+
+echo "==> All checks passed"
