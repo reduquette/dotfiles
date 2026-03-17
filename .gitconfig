@@ -1,13 +1,9 @@
 [core]
         hooksPath = /usr/local/dd/global_hooks
+        excludesFile = ~/.config/git/ignore
 [user]
-        # The name you want to appear as the author of your commits
         name = Rachel Duquette
-        # The e-mail address that is associated to the author of your commits
         email = rachel.duquette@datadoghq.com
-        # This is an ssh key that can be used to sign your commits, it should
-        # be made available to your workspace via ssh agent forwarding and can be
-        # seen on your laptop by issuing `git config --global user.signingkey`
         signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL+zCNGUBlvta2SB11Qv7LRooQRahXCn6tUtaJaU+aJp
 [commit]
         gpgsign = true
@@ -18,10 +14,7 @@
 [dd-gitsign]
         username = reduquette
 [alias]
-	cane = commit --amend --no-edit
-        pushf = push --force-with-lease
         gone = ! git fetch -p && git for-each-ref --format '%(refname:short) %(upstream:track)' | awk '$2 == \"[gone]\" {print $1}' | xargs -r git branch -D
-	undo = reset --soft HEAD~1
 	aliases = "!git config -l | grep alias | cut -c 7-"
 [push]
 	autoSetupRemote = true

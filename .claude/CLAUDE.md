@@ -6,44 +6,163 @@ I use **jujutsu (jj)** instead of git for version control. All repositories are 
 
 **Always prefer `jj` commands over `git` commands.**
 
-### Command mapping
+### Mental model
 
-| Instead of | Use |
-|---|---|
-| `git status` | `jj status` |
-| `git diff` | `jj diff` |
-| `git log` | `jj log` |
-| `git show <ref>` | `jj show <ref>` |
-| `git add` + `git commit -m "…"` | `jj commit -m "…"` (or edit then `jj describe -m "…"`) |
-| `git commit --amend` | `jj describe -m "…"` (update current change's description) |
-| `git branch` | `jj bookmark list` |
-| `git checkout -b <name>` | `jj new` then `jj bookmark set <name>` |
-| `git push` | `jj git push` |
-| `git fetch` | `jj git fetch` |
-| `git rebase` | `jj rebase` |
-| `git stash` | Not needed — jj auto-tracks working copy changes |
-| `git reset --soft HEAD~1` | `jj squash` (fold into parent) or `jj abandon` |
+- There is **no staging area** and **no working tree** separate from commits. Every file save is immediately part of the current change (like a perpetual `git add -A && git commit --amend`).
+- The **current change** (`@`) is analogous to the git staging area — it holds in-progress work.
+- The **parent of the current change** (`@-`) is the "last known good" state — analogous to HEAD in git.
+- Changes are identified by **change IDs** (short letter sequences like `qpvuntsm`), not SHA hashes.
+- **Bookmarks** are jj's equivalent of git branches. They are named references to changes and map to remote branches when pushed.
+- Conflicts are **non-blocking** — a rebase or merge that produces conflicts simply marks the change as conflicted; it does not halt the operation.
+- `jj undo` reverts the last operation. `jj op log` shows the full operation history for the repo.
 
-### Key concepts
+### Command reference
 
-- Changes are identified by **change IDs** (short letters like `qpvuntsm`), not SHA hashes. Use change IDs when referring to revisions.
-- There is **no staging area**. All file modifications in the working copy are automatically part of the current change.
-- Use `jj new` to start a new empty change on top of the current one.
-- Use `jj describe -m "message"` to set or update the current change's description.
-- Use `jj commit -m "message"` to describe the current change AND create a new empty change on top.
-- **Bookmarks** are jj's equivalent of git branches. Use `jj bookmark set <name>` to point a bookmark at the current change.
-- Use `jj git push` to push bookmarks to the remote.
+| Instead of | Use | Notes |
+|---|---|---|
+| `git status` | `jj status` or `jj st` | |
+| `git diff` | `jj diff` | |
+| `git diff --staged` | N/A | No staging area; `jj diff` shows current change |
+| `git log` | `jj log` | |
+| `git log` (branch only) | `jj log -r 'trunk()..@'` | Commits on your local branch, not on main |
+| `git log` (PR view) | `jj log -r 'trunk()..<branch>@origin'` | Commits on remote branch (matches GitHub PR) |
+| `git show` | `jj show` | |
+| `git add` + `git commit` | `jj commit -m "…"` | Shorthand for `jj describe -m "…" && jj new` |
+| `git commit --amend` | `jj squash` | Squashes current change into its parent |
+| `git branch` | `jj bookmark list` | |
+| `git checkout -b` | `jj new` + `jj bookmark set <name>` | |
+| `git switch <branch>` | `jj new <change-id-or-bookmark>` | Creates child change for iteration |
+| `git switch` (just move to) | `jj edit <revision>` | Directly checks out the change |
+| `git push` | `jj git push` | Force-pushes by default (like `--force-with-lease`) |
+| `git push -u origin branch` | `jj git push --named=<prefix>/<name>=@-` | First push: creates bookmark + pushes |
+| `git fetch` | `git fetch origin` | Prefer plain `git fetch` in colocated repos — it respects `remote.fetch` config and is faster than `jj git fetch` |
+| `git pull --rebase` | `git fetch origin && jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'` | No `jj pull` equivalent |
+| `git rebase -i main` | `jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'` | |
+| `git rebase --continue` | N/A | Conflicts are non-blocking; resolve with `jj new <conflicted> && jj resolve && jj squash` |
+| `git stash` | N/A | Not needed — switch changes freely at any time |
+| `git merge A B` | `jj new A B` | Creates a change with multiple parents |
+| `gh pr create` | `gh pr create -wH $(jj bookmark list -r 'pr_head()' -T name) -B $(jj bookmark list -r 'pr_base()' -T name)` | Requires revset aliases (see config below) |
 
-### Typical workflow
+### Revision shorthands
 
-1. `jj new` — start a new change
-2. Edit files (changes are automatically tracked)
-3. `jj describe -m "what I did"` — describe the change
-4. `jj bookmark set feature-name` — name it
-5. `jj git push` — push to remote
+- `@` — current change
+- `@-` — parent of current change
+- `@--` — grandparent
+- `@+` — direct descendant
+- `trunk()` — the main/default branch
 
-### When git is still appropriate
+### Core workflow
 
-- `gh` CLI for GitHub operations (PRs, issues) — works fine with colocated repos
-- `git grep` for searching (or use `rg`/ripgrep instead)
-- Reading git-specific metadata when jj doesn't expose it
+#### Starting new work
+
+```shell
+jj new main              # new change based on main
+# ... edit files ...
+jj commit -m "description"  # finalize and start next change
+```
+
+#### Iterating on a change
+
+Work in the child change (`@`), then squash into the parent (`@-`) when ready:
+
+```shell
+# ... edit files ...
+jj squash                # folds current change into parent
+```
+
+#### Switching between changes
+
+```shell
+jj new <change-id>       # create child to iterate on a change
+jj edit <change-id>      # directly check out a change
+```
+
+#### Pushing and creating PRs
+
+First push (creates remote branch):
+
+```shell
+jj git push --named=<user>/<branch-name>=@-
+```
+
+Subsequent pushes:
+
+```shell
+jj git push -r @-
+```
+
+Push entire stack:
+
+```shell
+jj git push -r 'immutable_heads()..(@::)'
+```
+
+#### Rebasing onto latest main
+
+```shell
+git fetch origin
+jj rebase --skip-emptied -s 'roots(immutable_heads()..@)' -d 'trunk()'
+```
+
+#### After a PR is merged
+
+```shell
+git fetch origin
+jj rebase --skip-emptied -s 'roots(immutable_heads()..visible_heads())' -d 'trunk()'
+jj git push -r 'immutable_heads()..visible_heads()'
+```
+
+#### Splitting a change
+
+```shell
+jj split                 # interactive; select hunks to split off
+jj split -r <revision>   # split a specific change
+```
+
+#### Resolving conflicts
+
+```shell
+jj new <conflicted-change>
+jj resolve               # opens configured merge editor
+jj squash
+```
+
+#### Handling devflow integration branch merge conflicts
+
+1. Create the fix PR from GitHub UI (from the devflow comment)
+2. `jj git fetch`
+3. `jj new <fix-branch>@origin <devflow-copy-of-your-branch>@origin`
+4. Resolve the conflict
+5. `jj describe -m "Merged <devflow-copy-of-your-branch>"`
+6. `jj bookmark track <fix-branch>@origin`
+7. `jj bookmark move <fix-branch>`
+8. `jj git push`
+
+#### Bookmarks
+
+```shell
+jj bookmark list                          # list all bookmarks
+jj bookmark set <name>                    # point bookmark at current change
+jj bookmark set <name> -r @-             # point bookmark at parent
+jj bookmark create -r @- <name>          # create new bookmark at parent
+jj bookmark track <name>@origin          # track a remote bookmark
+jj bookmark forget glob:\*               # forget all imported bookmarks
+```
+
+#### Undo and history
+
+```shell
+jj undo                  # undo last operation
+jj op log                # view operation history
+jj op restore <op_id>    # restore repo to a previous state
+```
+
+### Exceptions
+
+- `gh` CLI for GitHub operations (PRs, issues) is fine.
+- `git fetch origin` is preferred over `jj git fetch` in colocated repos (respects `remote.fetch` config, faster in large repos).
+- `git grep` or `rg` for code search is fine.
+
+### Important: never use these git commands
+
+Do NOT use `git add`, `git commit`, `git checkout`, `git switch`, `git branch`, `git push`, `git pull`, `git rebase`, `git merge`, `git stash`. Use the jj equivalents above.

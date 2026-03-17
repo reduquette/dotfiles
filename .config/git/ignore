@@ -1,2 +1,6 @@
-# Personal editor configuration — never commit these to shared repos
-.cursor/
+.DS_Store
+.idea/
+*.swp
+*.swo
+*~
+.env.local
