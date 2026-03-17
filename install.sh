@@ -117,7 +117,7 @@ install_tools_linux() {
         | grep -i '^location:' | sed 's|.*/||' | tr -d '\r\n')
       if [ -n "$_JJ_TAG" ]; then
         curl -fsSL "https://github.com/jj-vcs/jj/releases/download/${_JJ_TAG}/jj-${_JJ_TAG}-${_JJ_ARCH}.tar.gz" \
-          | tar xz -C "$HOME/.local/bin" jj 2>/dev/null \
+          | tar xz -C "$HOME/.local/bin" ./jj \
           && echo "   Installed jj ${_JJ_TAG}" \
           || echo "   Warning: failed to download jj"
       else
