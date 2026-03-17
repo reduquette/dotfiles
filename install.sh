@@ -275,6 +275,13 @@ echo "==> Configuring git SSH rewrite"
 if ssh -T git@github.com 2>&1 | grep -qi "successfully authenticated"; then
   git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'
   echo "   Enabled HTTPS → SSH rewrite for github.com"
+  # Fix the dotfiles repo remote if it was cloned via HTTPS (common during initial provisioning)
+  _DOTFILES_REMOTE=$(git -C "$DOTFILES_PATH" remote get-url origin 2>/dev/null || true)
+  if echo "$_DOTFILES_REMOTE" | grep -q '^https://github.com/'; then
+    _DOTFILES_SSH_URL="git@github.com:${_DOTFILES_REMOTE#https://github.com/}"
+    git -C "$DOTFILES_PATH" remote set-url origin "$_DOTFILES_SSH_URL"
+    echo "   Updated dotfiles remote: $_DOTFILES_REMOTE -> $_DOTFILES_SSH_URL"
+  fi
 else
   echo "   SSH to GitHub not available yet. To enable later:"
   echo "     git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'"
