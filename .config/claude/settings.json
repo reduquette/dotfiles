@@ -81,6 +81,8 @@
       "Bash(realpath:*)",
       "Bash(go:*)",
       "Bash(bzl:*)",
+      "Bash(ddtool vault:*)",
+      "Bash(ddtool auth:*)",
       "Bash(BZL_TEST_RESULTS_VIEWER_ENABLED=true bzl:*)",
       "Bash(jj split:*)",
       "Bash(jj op:*)",
