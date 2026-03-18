@@ -31,11 +31,6 @@ jj() {
   command jj "$@"
 }
 
-# One-time post-SSH setup (runs on first interactive SSH login)
-if [ -n "$SSH_CONNECTION" ] && [ ! -f "$HOME/.dotfiles-ssh-setup-done" ] && [ -x "$HOME/dotfiles/setup-ssh.sh" ]; then
-  "$HOME/dotfiles/setup-ssh.sh"
-fi
-
 # Auto-start/attach tmux for interactive SSH sessions
 if [ -n "$SSH_CONNECTION" ] && [ -z "$TMUX" ] && [ -z "$NO_TMUX" ] && command -v tmux >/dev/null 2>&1; then
   exec tmux new-session -A -s work
