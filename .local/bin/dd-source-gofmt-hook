@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Local pre-push hook for dd-source: auto-formats changed Go files with gofmt.
+# Installed by dotfiles/install.sh as .git/hooks/pre-push in dd-source.
+set -euo pipefail
+
+# Determine the upstream ref to diff against
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null \
+  || git rev-parse --verify origin/main 2>/dev/null \
+  || true)
+[ -n "$upstream" ] || exit 0
+
+merge_base=$(git merge-base HEAD "$upstream" 2>/dev/null || true)
+[ -n "$merge_base" ] || exit 0
+
+# Collect changed .go files, excluding generated files
+changed_go=()
+while IFS= read -r f; do
+  [[ "$f" == *.go ]] || continue
+  [[ "$f" =~ \.(pb|pb\.validate|gen|generated)\.go$ ]] && continue
+  [[ "$f" =~ _mockgen\.go$|^mock_.*\.go$ ]] && continue
+  [ -f "$f" ] || continue
+  changed_go+=("$f")
+done < <(git diff --name-only "$merge_base" HEAD)
+
+[ "${#changed_go[@]}" -gt 0 ] || exit 0
+
+# Check if any files need formatting
+needs_fmt=$(gofmt -l "${changed_go[@]}" 2>/dev/null || true)
+[ -n "$needs_fmt" ] || exit 0
+
+echo "==> gofmt: fixing:"
+echo "$needs_fmt" | sed 's/^/     /'
+gofmt -w "${changed_go[@]}"
+
+# Squash the fix into the parent commit (the commit being pushed)
+if jj root &>/dev/null 2>&1; then
+  jj squash
+  echo "==> Squashed formatting fixes into parent commit."
+fi
+
+echo ""
+echo "  Formatting fixes applied. Please push again."
+exit 1

@@ -1,5 +1,5 @@
 [core]
-        hooksPath = /usr/local/dd/global_hooks
+        hooksPath = /home/bits/.global_hooks
         excludesFile = ~/.config/git/ignore
 [user]
         name = Rachel Duquette

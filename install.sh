@@ -232,17 +232,12 @@ if [ -n "${DD_SOURCE_PATH:-}" ] && [ -d "$DD_SOURCE_PATH/.git" ]; then
   echo "   Configuring dd-source git hooks"
   (cd "$DD_SOURCE_PATH" && git config --local ddsource.hooks.pre-push.gazelle true)
   (cd "$DD_SOURCE_PATH" && git config --local ddsource.hooks.pre-push.gofmt true)
+  # Wire up local pre-push hook (called by run-local-hooks in the global pre-push hook)
+  mkdir -p "$DD_SOURCE_PATH/.git/hooks"
+  ln -sf "$HOME/.local/bin/dd-source-gofmt-hook" "$DD_SOURCE_PATH/.git/hooks/pre-push"
+  echo "   Linked dd-source-gofmt-hook as .git/hooks/pre-push"
 
-  # Fetch and track personal bookmarks (requires SSH key)
-  JJ_USER_PREFIX="$(git config --global user.email | cut -d@ -f1)"
-  echo "   Fetching and tracking bookmarks for $JJ_USER_PREFIX"
-  if (cd "$DD_SOURCE_PATH" && jj git fetch --bookmark "$JJ_USER_PREFIX/*" 2>&1); then
-    (cd "$DD_SOURCE_PATH" && jj git import)
-    (cd "$DD_SOURCE_PATH" && jj bookmark track "glob:$JJ_USER_PREFIX/**@origin" 2>/dev/null || true)
-  else
-    echo "   Skipped: SSH key not available yet. Run this later to fetch bookmarks:"
-    echo "     cd $DD_SOURCE_PATH && jj git fetch --bookmark '$JJ_USER_PREFIX/*' && jj git import"
-  fi
+  echo "   Skipping bookmark fetch (SSH not available during provisioning; run ~/dotfiles/setup-ssh.sh after first login)"
 else
   echo "   dd-source repository not found (skipping; set DD_SOURCE_PATH or use ~/dd/dd-source or ~/go/src/github.com/DataDog/dd-source)"
 fi
@@ -268,24 +263,8 @@ deploy_cursor_rules "${DD_SOURCE_PATH:-}"
 # deploy_cursor_rules "$HOME/other-project"
 
 
-# Enable HTTPS → SSH rewrite for GitHub once SSH is available.
-# This is not in .gitconfig because install.sh runs during workspace
-# provisioning before SSH keys are forwarded.
-echo "==> Configuring git SSH rewrite"
-if ssh -T git@github.com 2>&1 | grep -qi "successfully authenticated"; then
-  git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'
-  echo "   Enabled HTTPS → SSH rewrite for github.com"
-  # Fix the dotfiles repo remote if it was cloned via HTTPS (common during initial provisioning)
-  _DOTFILES_REMOTE=$(git -C "$DOTFILES_PATH" remote get-url origin 2>/dev/null || true)
-  if echo "$_DOTFILES_REMOTE" | grep -q '^https://github.com/'; then
-    _DOTFILES_SSH_URL="git@github.com:${_DOTFILES_REMOTE#https://github.com/}"
-    git -C "$DOTFILES_PATH" remote set-url origin "$_DOTFILES_SSH_URL"
-    echo "   Updated dotfiles remote: $_DOTFILES_REMOTE -> $_DOTFILES_SSH_URL"
-  fi
-else
-  echo "   SSH to GitHub not available yet. To enable later:"
-  echo "     git config --global 'url.git@github.com:.insteadOf' 'https://github.com/'"
-fi
-
-
 echo "==> Done"
+echo ""
+echo "   SSH-dependent setup was skipped (not available during provisioning)."
+echo "   After your first SSH login, run:  ~/dotfiles/setup-ssh.sh"
+echo "   This will configure the git HTTPS→SSH rewrite and fetch your personal jj bookmarks."
