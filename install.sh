@@ -263,6 +263,24 @@ deploy_cursor_rules "${DD_SOURCE_PATH:-}"
 # deploy_cursor_rules "$HOME/other-project"
 
 
+echo "==> Deploying Claude Code memory for dd-source"
+
+_CLAUDE_MEMORY_SRC="$DOTFILES_PATH/.config/claude/dd-source-memory"
+_CLAUDE_MEMORY_DEST="$HOME/.claude/projects/-home-bits-go-src-github-com-DataDog-dd-source/memory"
+if [ -d "$_CLAUDE_MEMORY_SRC" ]; then
+  mkdir -p "$(dirname "$_CLAUDE_MEMORY_DEST")"
+  if [ -L "$_CLAUDE_MEMORY_DEST" ]; then
+    echo "   Claude memory already symlinked"
+  elif [ -d "$_CLAUDE_MEMORY_DEST" ] && [ ! -L "$_CLAUDE_MEMORY_DEST" ]; then
+    echo "   Warning: $_CLAUDE_MEMORY_DEST exists as a real directory — skipping symlink"
+    echo "   To fix: rm -rf $_CLAUDE_MEMORY_DEST && run install.sh again"
+  else
+    ln -s "$_CLAUDE_MEMORY_SRC" "$_CLAUDE_MEMORY_DEST"
+    echo "   Symlinked Claude memory -> $_CLAUDE_MEMORY_DEST"
+  fi
+fi
+
+
 echo "==> Done"
 echo ""
 echo "   SSH-dependent setup was skipped (not available during provisioning)."
