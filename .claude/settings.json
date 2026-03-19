@@ -101,6 +101,18 @@
       "mcp__atlassian__updateConfluencePage"
     ]
   },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f ~/.claude/settings.json ] && [ -f ~/dotfiles/.claude/settings.json ]; then NEW_ALLOW=$(jq -s '((.[0].permissions.allow // []) + (.[1].permissions.allow // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_DENY=$(jq -s '((.[0].permissions.deny // []) + (.[1].permissions.deny // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && OLD_ALLOW=$(jq '(.permissions.allow // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_DENY=$(jq '(.permissions.deny // []) | unique | sort' ~/dotfiles/.claude/settings.json); if [ \"$NEW_ALLOW\" != \"$OLD_ALLOW\" ] || [ \"$NEW_DENY\" != \"$OLD_DENY\" ]; then jq --argjson allow \"$NEW_ALLOW\" --argjson deny \"$NEW_DENY\" '.permissions.allow = $allow | .permissions.deny = $deny' ~/dotfiles/.claude/settings.json > /tmp/.claude-perms-sync.tmp && mv /tmp/.claude-perms-sync.tmp ~/dotfiles/.claude/settings.json && echo '{\"systemMessage\": \"Permissions synced to ~/dotfiles — remember to commit and push!\"}'; fi; fi"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "slack@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
