@@ -32,3 +32,7 @@
 	sort = -committerdate
 [merge]
 	conflictstyle = zdiff3
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[maintenance]
+	repo = /home/bits/go/src/github.com/DataDog/dd-source

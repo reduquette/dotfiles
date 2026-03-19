@@ -14,7 +14,7 @@ unset _candidate 2>/dev/null || true
 
 echo "==> Configuring git SSH rewrite"
 
-if ! ssh -T git@github.com 2>&1 | grep -qi "successfully authenticated"; then
+if ! { ssh -T git@github.com 2>&1 || true; } | grep -qi "successfully authenticated"; then
   echo "   SSH to GitHub not available. Make sure you connected with ForwardAgent yes and try again."
   exit 1
 fi

@@ -31,6 +31,10 @@ jj() {
   command jj "$@"
 }
 
+# Use the stable SSH agent symlink maintained by update-ssh-agent-socket.sh
+# so new shells (tmux panes, etc.) don't lose agent forwarding
+export SSH_AUTH_SOCK="$HOME/.ssh/ssh_auth_sock"
+
 # Auto-start/attach tmux for interactive SSH sessions
 if [ -n "$SSH_CONNECTION" ] && [ -z "$TMUX" ] && [ -z "$NO_TMUX" ] && command -v tmux >/dev/null 2>&1; then
   exec tmux new-session -A -s work
