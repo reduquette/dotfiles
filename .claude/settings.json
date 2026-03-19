@@ -104,12 +104,32 @@
     "deny": []
   },
   "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); NAME=$(echo \"$INPUT\" | jq -r '.name'); CWD=$(echo \"$INPUT\" | jq -r '.cwd'); cd \"$CWD\" || exit 1; REPO_ROOT=$(jj root 2>/dev/null) || { echo 'WorktreeCreate requires a jj repository — start Claude from within your project directory' >&2; exit 1; }; WORKTREE_PATH=\"$HOME/.claude/worktrees/$NAME\"; mkdir -p \"$HOME/.claude/worktrees\" && cd \"$REPO_ROOT\" && jj workspace add \"$WORKTREE_PATH\" --name \"$NAME\" && echo \"$WORKTREE_PATH\""
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); NAME=$(echo \"$INPUT\" | jq -r '.name'); PATH_=$(echo \"$INPUT\" | jq -r '.path // empty'); CWD=$(echo \"$INPUT\" | jq -r '.cwd'); [ -n \"$PATH_\" ] || PATH_=\"$HOME/.claude/worktrees/$NAME\"; cd \"$CWD\" && REPO_ROOT=$(jj root 2>/dev/null) && cd \"$REPO_ROOT\" && jj workspace forget \"$NAME\" && rm -rf \"$PATH_\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f ~/.claude/settings.json ] && [ -f ~/dotfiles/.claude/settings.json ]; then NEW_ALLOW=$(jq -s '((.[0].permissions.allow // []) + (.[1].permissions.allow // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_DENY=$(jq -s '((.[0].permissions.deny // []) + (.[1].permissions.deny // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_PLUGINS=$(jq -s '((.[1].enabledPlugins // {}) * (.[0].enabledPlugins // {})) | to_entries | sort_by(.key) | from_entries' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && OLD_ALLOW=$(jq '(.permissions.allow // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_DENY=$(jq '(.permissions.deny // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_PLUGINS=$(jq '(.enabledPlugins // {}) | to_entries | sort_by(.key) | from_entries' ~/dotfiles/.claude/settings.json); if [ \"$NEW_ALLOW\" != \"$OLD_ALLOW\" ] || [ \"$NEW_DENY\" != \"$OLD_DENY\" ] || [ \"$NEW_PLUGINS\" != \"$OLD_PLUGINS\" ]; then jq --argjson allow \"$NEW_ALLOW\" --argjson deny \"$NEW_DENY\" --argjson plugins \"$NEW_PLUGINS\" '.permissions.allow = $allow | .permissions.deny = $deny | .enabledPlugins = $plugins' ~/dotfiles/.claude/settings.json > /tmp/.claude-perms-sync.tmp && mv /tmp/.claude-perms-sync.tmp ~/dotfiles/.claude/settings.json && echo '{\"systemMessage\": \"Settings synced to ~/dotfiles — remember to commit and push!\"}'; fi; fi"
+            "command": "if [ -f ~/.claude/settings.json ] && [ -f ~/dotfiles/.claude/settings.json ]; then NEW_ALLOW=$(jq -s '((.[0].permissions.allow // []) + (.[1].permissions.allow // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_DENY=$(jq -s '((.[0].permissions.deny // []) + (.[1].permissions.deny // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_PLUGINS=$(jq -s '((.[1].enabledPlugins // {}) * (.[0].enabledPlugins // {})) | to_entries | sort_by(.key) | from_entries' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_HOOKS=$(jq '.hooks' ~/.claude/settings.json) && OLD_ALLOW=$(jq '(.permissions.allow // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_DENY=$(jq '(.permissions.deny // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_PLUGINS=$(jq '(.enabledPlugins // {}) | to_entries | sort_by(.key) | from_entries' ~/dotfiles/.claude/settings.json) && OLD_HOOKS=$(jq '.hooks' ~/dotfiles/.claude/settings.json); if [ \"$NEW_ALLOW\" != \"$OLD_ALLOW\" ] || [ \"$NEW_DENY\" != \"$OLD_DENY\" ] || [ \"$NEW_PLUGINS\" != \"$OLD_PLUGINS\" ] || [ \"$NEW_HOOKS\" != \"$OLD_HOOKS\" ]; then jq --argjson allow \"$NEW_ALLOW\" --argjson deny \"$NEW_DENY\" --argjson plugins \"$NEW_PLUGINS\" --argjson hooks \"$NEW_HOOKS\" '.permissions.allow = $allow | .permissions.deny = $deny | .enabledPlugins = $plugins | .hooks = $hooks' ~/dotfiles/.claude/settings.json > /tmp/.claude-perms-sync.tmp && mv /tmp/.claude-perms-sync.tmp ~/dotfiles/.claude/settings.json && echo '{\"systemMessage\": \"Settings synced to ~/dotfiles — remember to commit and push!\"}'; fi; fi"
           }
         ]
       }
