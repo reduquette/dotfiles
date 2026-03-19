@@ -171,14 +171,10 @@ install_starpls
 
 echo "==> Configuring shell init"
 
-# Source the managed shell init from both .zshrc and .bashrc
-SHELL_INIT='[ -f "$HOME/.config/shell/init.sh" ] && . "$HOME/.config/shell/init.sh"'
-for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
-  touch "$rc"
-  grep -qxF "$SHELL_INIT" "$rc" 2>/dev/null || echo "$SHELL_INIT" >> "$rc"
-done
-
-# Ensure ~/.bash_profile sources ~/.bashrc (macOS bash login shells skip .bashrc)
+# .zshrc and .bashrc are managed as dotfiles and symlinked by the loop above.
+# Ensure ~/.bash_profile sources ~/.bashrc for macOS login shells (which read
+# .bash_profile instead of .bashrc, so without this bash login shells would
+# miss PATH, SSH agent, etc.).
 if ! grep -Fq '. ~/.bashrc' ~/.bash_profile 2>/dev/null; then
   printf '\n# Source .bashrc if it exists (for macOS login shells)\nif [ -f ~/.bashrc ]; then\n  . ~/.bashrc\nfi\n' >> ~/.bash_profile
   echo "   Added .bashrc sourcing to ~/.bash_profile"
