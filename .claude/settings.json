@@ -4,7 +4,8 @@
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "DISABLE_ERROR_REPORTING": "1",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
-    "DISABLE_TELEMETRY": "1"
+    "DISABLE_TELEMETRY": "1",
+    "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
     "allow": [
@@ -99,7 +100,8 @@
       "mcp__atlassian__getConfluencePage",
       "mcp__atlassian__searchAtlassian",
       "mcp__atlassian__updateConfluencePage"
-    ]
+    ],
+    "deny": []
   },
   "hooks": {
     "Stop": [
@@ -114,23 +116,24 @@
     ]
   },
   "enabledPlugins": {
-    "slack@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true,
-    "permissions@mat-brown-contrib": true,
-    "feature-dev@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "dd@datadog-claude-plugins": true,
-    "osx-notifications@datadog-claude-plugins": true,
-    "redblue@datadog-claude-plugins": true,
-    "go-code-reviewer@datadog-claude-plugins": true,
-    "python-code-reviewer@datadog-claude-plugins": true,
-    "marketplace-auto-update@datadog-claude-plugins": true,
-    "orgstore@datadog-claude-plugins": true,
     "bits-dev@datadog-claude-plugins": true,
     "bits-remote-agent@datadog-claude-plugins": true,
-    "rapid@datadog-claude-plugins": true,
+    "branch-stacking-detection@mat-brown-contrib": true,
+    "commit-commands@claude-plugins-official": true,
+    "dd@datadog-claude-plugins": true,
+    "feature-dev@claude-plugins-official": true,
     "git-mergetool@mat-brown-contrib": true,
-    "branch-stacking-detection@mat-brown-contrib": true
+    "go-code-reviewer@datadog-claude-plugins": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "language-tools@datadog-dd-source-claude-plugins": true,
+    "marketplace-auto-update@datadog-claude-plugins": true,
+    "orgstore@datadog-claude-plugins": true,
+    "osx-notifications@datadog-claude-plugins": true,
+    "permissions@mat-brown-contrib": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "python-code-reviewer@datadog-claude-plugins": true,
+    "rapid@datadog-claude-plugins": true,
+    "redblue@datadog-claude-plugins": true,
+    "slack@claude-plugins-official": true
   }
 }
