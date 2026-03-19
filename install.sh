@@ -96,13 +96,39 @@ install_tools_linux() {
   if command -v apt-get >/dev/null 2>&1; then
     local apt_pkgs=()
     command -v tmux  >/dev/null 2>&1 || apt_pkgs+=(tmux)
-    command -v fzf   >/dev/null 2>&1 || apt_pkgs+=(fzf)
 
     if [ ${#apt_pkgs[@]} -gt 0 ]; then
       echo "   Installing via apt: ${apt_pkgs[*]}"
       sudo apt-get update -qq 2>/dev/null || true
       sudo apt-get install -y -qq "${apt_pkgs[@]}" 2>/dev/null || echo "   Warning: apt install failed for some packages"
     fi
+  fi
+
+  # fzf: direct binary from GitHub releases (apt version on Ubuntu 22.04 is too old)
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "   Installing fzf from GitHub releases"
+    case "$ARCH" in
+      x86_64)  _FZF_ARCH="linux_amd64" ;;
+      aarch64) _FZF_ARCH="linux_arm64" ;;
+      *)       _FZF_ARCH="" ;;
+    esac
+    if [ -n "$_FZF_ARCH" ]; then
+      _FZF_TAG=$(curl -fsSI "https://github.com/junegunn/fzf/releases/latest" 2>/dev/null \
+        | grep -i '^location:' | sed 's|.*/||' | tr -d '\r\n')
+      if [ -n "$_FZF_TAG" ]; then
+        _FZF_VER="${_FZF_TAG#v}"
+        curl -fsSL "https://github.com/junegunn/fzf/releases/download/${_FZF_TAG}/fzf-${_FZF_VER}-${_FZF_ARCH}.tar.gz" \
+          | tar xz -C "$HOME/.local/bin" fzf \
+          && echo "   Installed fzf ${_FZF_TAG}" \
+          || echo "   Warning: failed to download fzf"
+      else
+        echo "   Warning: could not determine latest fzf release"
+      fi
+    else
+      echo "   Warning: unsupported architecture $ARCH for fzf"
+    fi
+  else
+    echo "   fzf already installed"
   fi
 
   # jj: direct binary from GitHub releases
