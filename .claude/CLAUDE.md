@@ -166,3 +166,7 @@ jj op restore <op_id>    # restore repo to a previous state
 ### Important: never use these git commands
 
 Do NOT use `git add`, `git commit`, `git checkout`, `git switch`, `git branch`, `git push`, `git pull`, `git rebase`, `git merge`, `git stash`. Use the jj equivalents above.
+
+## Bash command style
+
+Never use `$()` command substitution in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. Instead, split the command into sequential Bash calls and use the output of the first call to construct the second.

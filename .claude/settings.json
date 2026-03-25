@@ -8,6 +8,7 @@
     "ENABLE_TOOL_SEARCH": "true"
   },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(BZL_TEST_RESULTS_VIEWER_ENABLED=true bzl:*)",
       "Bash(bzl:*)",

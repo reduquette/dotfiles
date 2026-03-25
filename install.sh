@@ -305,10 +305,13 @@ if [ -f "$_DOTFILES_CLAUDE_SETTINGS" ]; then
   elif command -v jq >/dev/null 2>&1; then
     jq --slurpfile user "$_DOTFILES_CLAUDE_SETTINGS" '
       . + {
-        permissions: {
-          allow: (((.permissions.allow // []) + ($user[0].permissions.allow // [])) | unique),
-          deny:  (((.permissions.deny  // []) + ($user[0].permissions.deny  // [])) | unique)
-        },
+        permissions: (
+          ($user[0].permissions // {}) + (.permissions // {}) +
+          {
+            allow: (((.permissions.allow // []) + ($user[0].permissions.allow // [])) | unique),
+            deny:  (((.permissions.deny  // []) + ($user[0].permissions.deny  // [])) | unique)
+          }
+        ),
         enabledPlugins: ((.enabledPlugins // {}) + ($user[0].enabledPlugins // {})),
         env: ((.env // {}) + ($user[0].env // {}))
       }
