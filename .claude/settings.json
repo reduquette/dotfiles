@@ -67,6 +67,7 @@
       "Bash(jj st:*)",
       "Bash(jj status:*)",
       "Bash(jj undo:*)",
+      "Bash(jj:*)",
       "Bash(jq:*)",
       "Bash(ls:*)",
       "Bash(lsof:*)",
@@ -101,7 +102,10 @@
       "mcp__atlassian__searchAtlassian",
       "mcp__atlassian__updateConfluencePage"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/home/bits/.claude/worktrees"
+    ]
   },
   "hooks": {
     "WorktreeCreate": [
@@ -139,6 +143,7 @@
     "bits-dev@datadog-claude-plugins": true,
     "bits-remote-agent@datadog-claude-plugins": true,
     "branch-stacking-detection@mat-brown-contrib": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "dd@datadog-claude-plugins": true,
     "feature-dev@claude-plugins-official": true,
@@ -154,6 +159,7 @@
     "python-code-reviewer@datadog-claude-plugins": true,
     "rapid@datadog-claude-plugins": true,
     "redblue@datadog-claude-plugins": true,
-    "slack@claude-plugins-official": true
+    "slack@claude-plugins-official": true,
+    "suggest-extensions@datadog-claude-plugins": true
   }
 }
