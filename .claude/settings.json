@@ -105,7 +105,8 @@
     ],
     "deny": [],
     "additionalDirectories": [
-      "/home/bits/.claude/worktrees"
+      "/home/bits/.claude/worktrees",
+      "/tmp"
     ]
   },
   "hooks": {
@@ -134,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f ~/.claude/settings.json ] && [ -f ~/dotfiles/.claude/settings.json ]; then NEW_ALLOW=$(jq -s '((.[0].permissions.allow // []) + (.[1].permissions.allow // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_DENY=$(jq -s '((.[0].permissions.deny // []) + (.[1].permissions.deny // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_PLUGINS=$(jq -s '((.[1].enabledPlugins // {}) * (.[0].enabledPlugins // {})) | to_entries | sort_by(.key) | from_entries' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_HOOKS=$(jq '.hooks' ~/.claude/settings.json) && OLD_ALLOW=$(jq '(.permissions.allow // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_DENY=$(jq '(.permissions.deny // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_PLUGINS=$(jq '(.enabledPlugins // {}) | to_entries | sort_by(.key) | from_entries' ~/dotfiles/.claude/settings.json) && OLD_HOOKS=$(jq '.hooks' ~/dotfiles/.claude/settings.json); if [ \"$NEW_ALLOW\" != \"$OLD_ALLOW\" ] || [ \"$NEW_DENY\" != \"$OLD_DENY\" ] || [ \"$NEW_PLUGINS\" != \"$OLD_PLUGINS\" ] || [ \"$NEW_HOOKS\" != \"$OLD_HOOKS\" ]; then jq --argjson allow \"$NEW_ALLOW\" --argjson deny \"$NEW_DENY\" --argjson plugins \"$NEW_PLUGINS\" --argjson hooks \"$NEW_HOOKS\" '.permissions.allow = $allow | .permissions.deny = $deny | .enabledPlugins = $plugins | .hooks = $hooks' ~/dotfiles/.claude/settings.json > /tmp/.claude-perms-sync.tmp && mv /tmp/.claude-perms-sync.tmp ~/dotfiles/.claude/settings.json && echo '{\"systemMessage\": \"Settings synced to ~/dotfiles — remember to commit and push!\"}'; fi; fi"
+            "command": "if [ -f ~/.claude/settings.json ] && [ -f ~/dotfiles/.claude/settings.json ]; then NEW_ALLOW=$(jq -s '((.[0].permissions.allow // []) + (.[1].permissions.allow // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_DENY=$(jq -s '((.[0].permissions.deny // []) + (.[1].permissions.deny // [])) | unique | sort' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && NEW_PLUGINS=$(jq -s '((.[1].enabledPlugins // {}) * (.[0].enabledPlugins // {})) | to_entries | sort_by(.key) | from_entries' ~/.claude/settings.json ~/dotfiles/.claude/settings.json) && OLD_ALLOW=$(jq '(.permissions.allow // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_DENY=$(jq '(.permissions.deny // []) | unique | sort' ~/dotfiles/.claude/settings.json) && OLD_PLUGINS=$(jq '(.enabledPlugins // {}) | to_entries | sort_by(.key) | from_entries' ~/dotfiles/.claude/settings.json); if [ \"$NEW_ALLOW\" != \"$OLD_ALLOW\" ] || [ \"$NEW_DENY\" != \"$OLD_DENY\" ] || [ \"$NEW_PLUGINS\" != \"$OLD_PLUGINS\" ]; then jq --argjson allow \"$NEW_ALLOW\" --argjson deny \"$NEW_DENY\" --argjson plugins \"$NEW_PLUGINS\" '.permissions.allow = $allow | .permissions.deny = $deny | .enabledPlugins = $plugins' ~/dotfiles/.claude/settings.json > /tmp/.claude-perms-sync.tmp && mv /tmp/.claude-perms-sync.tmp ~/dotfiles/.claude/settings.json && echo '{\"systemMessage\": \"Settings synced to ~/dotfiles — remember to commit and push!\"}'; fi; fi"
           }
         ]
       }
@@ -155,7 +156,6 @@
     "marketplace-auto-update@datadog-claude-plugins": true,
     "orgstore@datadog-claude-plugins": true,
     "osx-notifications@datadog-claude-plugins": true,
-    "permissions@mat-brown-contrib": true,
     "pr-review-toolkit@claude-plugins-official": true,
     "python-code-reviewer@datadog-claude-plugins": true,
     "rapid@datadog-claude-plugins": true,

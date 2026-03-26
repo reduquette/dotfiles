@@ -170,3 +170,5 @@ Do NOT use `git add`, `git commit`, `git checkout`, `git switch`, `git branch`, 
 ## Bash command style
 
 Never use `$()` command substitution in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. Instead, split the command into sequential Bash calls and use the output of the first call to construct the second.
+
+Never use a quoted string containing a newline followed by a `#`-prefixed line in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. Use single-line commands or intermediate variables instead.

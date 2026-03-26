@@ -313,7 +313,8 @@ if [ -f "$_DOTFILES_CLAUDE_SETTINGS" ]; then
           }
         ),
         enabledPlugins: ((.enabledPlugins // {}) + ($user[0].enabledPlugins // {})),
-        env: ((.env // {}) + ($user[0].env // {}))
+        env: ((.env // {}) + ($user[0].env // {})),
+        hooks: ($user[0].hooks // {})
       }
     ' "$_CLAUDE_USER_SETTINGS" > "$_CLAUDE_USER_SETTINGS.tmp" \
       && mv "$_CLAUDE_USER_SETTINGS.tmp" "$_CLAUDE_USER_SETTINGS" \
