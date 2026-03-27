@@ -9,3 +9,4 @@ This directory contains persistent memory files for the dd-source project contex
 - [feedback_bash_command_substitution.md](./feedback_bash_command_substitution.md) — Never use $() in Bash commands; split into sequential calls instead.
 - [feedback_bash_pipe_head.md](./feedback_bash_pipe_head.md) — Avoid `2>&1 | head -N` on read-only commands; triggers approval prompt.
 - [user_environment.md](./user_environment.md) — Claude Code runs on a remote Linux workspace, not the user's local machine; `bypassPermissions` is safe here.
+- [feedback_devflow_mergegate.md](./feedback_devflow_mergegate.md) — `devflow/mergegate` is permanent and never completes; if it's the only pending check, CI is green and PR is ready for review.

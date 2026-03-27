@@ -310,55 +310,27 @@ ln -sf "$DOTFILES_PATH/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 echo "   Symlinked CLAUDE.md -> ~/.claude/CLAUDE.md"
 
 
-echo "==> Merging Claude Code user settings"
+DOTFILES_PATH="$DOTFILES_PATH" bash "$DOTFILES_PATH/sync-claude-settings.sh"
 
-_CLAUDE_USER_SETTINGS="$HOME/.claude/settings.json"
-_DOTFILES_CLAUDE_SETTINGS="$DOTFILES_PATH/.claude/settings.json"
-if [ -f "$_DOTFILES_CLAUDE_SETTINGS" ]; then
-  if [ ! -f "$_CLAUDE_USER_SETTINGS" ]; then
-    mkdir -p "$HOME/.claude"
-    cp "$_DOTFILES_CLAUDE_SETTINGS" "$_CLAUDE_USER_SETTINGS"
-    echo "   Created $_CLAUDE_USER_SETTINGS from dotfiles"
-  elif command -v jq >/dev/null 2>&1; then
-    jq --slurpfile user "$_DOTFILES_CLAUDE_SETTINGS" '
-      . + {
-        permissions: (
-          ($user[0].permissions // {}) + (.permissions // {}) +
-          {
-            allow: (((.permissions.allow // []) + ($user[0].permissions.allow // [])) | unique),
-            deny:  (((.permissions.deny  // []) + ($user[0].permissions.deny  // [])) | unique)
-          }
-        ),
-        enabledPlugins: ((.enabledPlugins // {}) + ($user[0].enabledPlugins // {})),
-        env: ((.env // {}) + ($user[0].env // {})),
-        hooks: ($user[0].hooks // {})
-      }
-    ' "$_CLAUDE_USER_SETTINGS" > "$_CLAUDE_USER_SETTINGS.tmp" \
-      && mv "$_CLAUDE_USER_SETTINGS.tmp" "$_CLAUDE_USER_SETTINGS" \
-      && echo "   Merged Claude Code permissions into $_CLAUDE_USER_SETTINGS" \
-      || echo "   Warning: jq merge failed — $_CLAUDE_USER_SETTINGS unchanged"
+
+echo "==> Deploying Claude Code project memories"
+
+for _MEMORY_SRC in "$DOTFILES_PATH/.claude/projects/"*/memory; do
+  [ -d "$_MEMORY_SRC" ] || continue
+  _SLUG="${_MEMORY_SRC#$DOTFILES_PATH/.claude/projects/}"
+  _SLUG="${_SLUG%/memory}"
+  _MEMORY_DEST="$HOME/.claude/projects/$_SLUG/memory"
+  mkdir -p "$HOME/.claude/projects/$_SLUG"
+  if [ -L "$_MEMORY_DEST" ]; then
+    echo "   Already symlinked: $_SLUG/memory"
+  elif [ -d "$_MEMORY_DEST" ]; then
+    echo "   Warning: $_MEMORY_DEST exists as a real directory — skipping"
+    echo "   To fix: rm -rf $_MEMORY_DEST && run install.sh again"
   else
-    echo "   Warning: jq not found — skipping Claude Code settings merge"
+    ln -s "$_MEMORY_SRC" "$_MEMORY_DEST"
+    echo "   Symlinked $_SLUG/memory"
   fi
-fi
-
-
-echo "==> Deploying Claude Code memory for dd-source"
-
-_CLAUDE_MEMORY_SRC="$DOTFILES_PATH/.config/claude/dd-source-memory"
-_CLAUDE_MEMORY_DEST="$HOME/.claude/projects/-home-bits-go-src-github-com-DataDog-dd-source/memory"
-if [ -d "$_CLAUDE_MEMORY_SRC" ]; then
-  mkdir -p "$(dirname "$_CLAUDE_MEMORY_DEST")"
-  if [ -L "$_CLAUDE_MEMORY_DEST" ]; then
-    echo "   Claude memory already symlinked"
-  elif [ -d "$_CLAUDE_MEMORY_DEST" ] && [ ! -L "$_CLAUDE_MEMORY_DEST" ]; then
-    echo "   Warning: $_CLAUDE_MEMORY_DEST exists as a real directory — skipping symlink"
-    echo "   To fix: rm -rf $_CLAUDE_MEMORY_DEST && run install.sh again"
-  else
-    ln -s "$_CLAUDE_MEMORY_SRC" "$_CLAUDE_MEMORY_DEST"
-    echo "   Symlinked Claude memory -> $_CLAUDE_MEMORY_DEST"
-  fi
-fi
+done
 
 
 echo "==> Done"
