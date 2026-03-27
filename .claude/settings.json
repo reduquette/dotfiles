@@ -167,6 +167,7 @@
     "python-code-reviewer@datadog-claude-plugins": true,
     "rapid@datadog-claude-plugins": true,
     "redblue@datadog-claude-plugins": true,
+    "skill-creator@claude-plugins-official": true,
     "slack@claude-plugins-official": true,
     "suggest-extensions@datadog-claude-plugins": true
   }

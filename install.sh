@@ -96,6 +96,7 @@ install_tools_linux() {
   if command -v apt-get >/dev/null 2>&1; then
     local apt_pkgs=()
     command -v tmux  >/dev/null 2>&1 || apt_pkgs+=(tmux)
+    command -v node  >/dev/null 2>&1 || apt_pkgs+=(nodejs npm)
 
     if [ ${#apt_pkgs[@]} -gt 0 ]; then
       echo "   Installing via apt: ${apt_pkgs[*]}"
