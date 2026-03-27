@@ -11,7 +11,7 @@ INPUT=$(cat)
 TITLE=$(echo "$INPUT" | jq -r '.title // "Claude Code"' 2>/dev/null)
 BODY=$(echo "$INPUT" | jq -r '.message // ""' 2>/dev/null)
 
-jq -n --arg title "$TITLE" --arg body "$BODY" \
+jq -cn --arg title "$TITLE" --arg body "$BODY" \
   '{"method":"notification.create","params":{"title":$title,"body":$body}}' \
   | socat -t2 - UNIX-CONNECT:"$CMUX_SOCK" >/dev/null 2>&1
 
