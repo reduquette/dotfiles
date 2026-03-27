@@ -95,6 +95,7 @@ install_tools_linux() {
   # System packages via apt
   if command -v apt-get >/dev/null 2>&1; then
     local apt_pkgs=()
+    command -v socat >/dev/null 2>&1 || apt_pkgs+=(socat)
     command -v node  >/dev/null 2>&1 || apt_pkgs+=(nodejs npm)
 
     if [ ${#apt_pkgs[@]} -gt 0 ]; then

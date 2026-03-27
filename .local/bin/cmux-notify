@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Forward Claude Code notifications to local cmux via forwarded socket.
+# Skips if running in a local cmux terminal (the osx-notifications plugin handles it).
+[ -n "$CMUX_SURFACE_ID" ] && exit 0
+
+CMUX_SOCK="/tmp/cmux.sock"
+[ -S "$CMUX_SOCK" ] || exit 0
+command -v socat >/dev/null 2>&1 || exit 0
+
+INPUT=$(cat)
+TITLE=$(echo "$INPUT" | jq -r '.title // "Claude Code"' 2>/dev/null)
+BODY=$(echo "$INPUT" | jq -r '.message // ""' 2>/dev/null)
+
+jq -n --arg title "$TITLE" --arg body "$BODY" \
+  '{"method":"notification.create","params":{"title":$title,"body":$body}}' \
+  | socat -t2 - UNIX-CONNECT:"$CMUX_SOCK" >/dev/null 2>&1
+
+exit 0

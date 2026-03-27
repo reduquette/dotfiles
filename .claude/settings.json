@@ -143,6 +143,16 @@
         ]
       }
     ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmux-notify"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
