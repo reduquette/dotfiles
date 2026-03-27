@@ -172,3 +172,7 @@ Do NOT use `git add`, `git commit`, `git checkout`, `git switch`, `git branch`, 
 Never use `$()` command substitution in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. Instead, split the command into sequential Bash calls and use the output of the first call to construct the second.
 
 Never use a quoted string containing a newline followed by a `#`-prefixed line in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. Use single-line commands or intermediate variables instead.
+
+Never use a backslash immediately before a shell operator (`\|`, `\;`, `\&`, `\<`, `\>`) in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. This includes inside heredocs written via the Bash tool — the scanner checks the entire command string. Use plain operators without escaping.
+
+Never append `2>&1 | head -N` to read-only informational commands (e.g. `jj log`, `jj diff --stat`). It triggers a hardcoded security prompt. Rely on Claude Code's built-in output truncation instead.

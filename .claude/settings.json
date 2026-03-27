@@ -10,7 +10,13 @@
   "permissions": {
     "defaultMode": "auto",
     "allow": [
+      "Bash(/home/bits/.claude/plugins/cache/**:*)",
+      "Bash(/home/bits/.claude/plugins/cache/*:*)",
+      "Bash(/home/bits/.claude/plugins/cache/datadog-claude-plugins/dd/09aec8d566f6/skills/pr-babysit/scripts/poll-ci.sh:*)",
+      "Bash(/home/bits/.claude/plugins/cache/datadog-claude-plugins/dd/09aec8d566f6/skills/pr-babysit/scripts/poll-reviews.sh:*)",
       "Bash(/home/bits/.claude/plugins/cache:*)",
+      "Bash(/home/bits/.claude/plugins/marketplaces/**:*)",
+      "Bash(/home/bits/.claude/plugins/marketplaces/*:*)",
       "Bash(/home/bits/.claude/plugins/marketplaces:*)",
       "Bash(BZL_TEST_RESULTS_VIEWER_ENABLED=true bzl:*)",
       "Bash(bzl:*)",
