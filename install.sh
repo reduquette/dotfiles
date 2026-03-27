@@ -95,7 +95,6 @@ install_tools_linux() {
   # System packages via apt
   if command -v apt-get >/dev/null 2>&1; then
     local apt_pkgs=()
-    command -v tmux  >/dev/null 2>&1 || apt_pkgs+=(tmux)
     command -v node  >/dev/null 2>&1 || apt_pkgs+=(nodejs npm)
 
     if [ ${#apt_pkgs[@]} -gt 0 ]; then
@@ -103,6 +102,22 @@ install_tools_linux() {
       sudo apt-get update -qq 2>/dev/null || true
       sudo apt-get install -y -qq "${apt_pkgs[@]}" 2>/dev/null || echo "   Warning: apt install failed for some packages"
     fi
+  fi
+
+  # tmux: build from source (apt ships 3.2a; need 3.3+ for allow-passthrough)
+  _TMUX_LATEST=$(curl -fsSL https://api.github.com/repos/tmux/tmux/releases/latest 2>/dev/null | jq -r .tag_name)
+  if ! tmux -V 2>/dev/null | grep -q "$_TMUX_LATEST"; then
+    echo "   Building tmux $_TMUX_LATEST from source"
+    sudo apt-get update -qq 2>/dev/null || true
+    sudo apt-get install -y -qq build-essential libevent-dev libncurses-dev bison 2>/dev/null || true
+    curl -fsSL "https://github.com/tmux/tmux/releases/download/${_TMUX_LATEST}/tmux-${_TMUX_LATEST}.tar.gz" \
+      | tar xz -C /tmp
+    (cd "/tmp/tmux-${_TMUX_LATEST}" && ./configure --prefix="$HOME/.local" && make && make install) \
+      && echo "   Installed tmux $_TMUX_LATEST to ~/.local/bin" \
+      || echo "   Warning: tmux build failed"
+    rm -rf "/tmp/tmux-${_TMUX_LATEST}"
+  else
+    echo "   tmux already up to date ($_TMUX_LATEST)"
   fi
 
   # fzf: direct binary from GitHub releases (apt version on Ubuntu 22.04 is too old)
