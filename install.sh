@@ -96,7 +96,16 @@ install_tools_linux() {
   if command -v apt-get >/dev/null 2>&1; then
     local apt_pkgs=()
     command -v socat >/dev/null 2>&1 || apt_pkgs+=(socat)
-    command -v node  >/dev/null 2>&1 || apt_pkgs+=(nodejs npm)
+
+    # Node.js: use NodeSource repo for v22 (apt default is too old for some tools)
+    _NODE_MAJOR=$(node --version 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+    if [ -z "$_NODE_MAJOR" ] || [ "$_NODE_MAJOR" -lt 20 ]; then
+      echo "   Setting up NodeSource repo for Node.js v22"
+      curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - 2>/dev/null || true
+      # Remove packages that conflict with the NodeSource nodejs bundle
+      sudo apt-get remove -y libnode-dev nodejs-doc 2>/dev/null || true
+      apt_pkgs+=(nodejs)
+    fi
 
     if [ ${#apt_pkgs[@]} -gt 0 ]; then
       echo "   Installing via apt: ${apt_pkgs[*]}"
