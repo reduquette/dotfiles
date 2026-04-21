@@ -98,7 +98,7 @@ install_tools_linux() {
     command -v socat >/dev/null 2>&1 || apt_pkgs+=(socat)
 
     # Node.js: use NodeSource repo for v22 (apt default is too old for some tools)
-    _NODE_MAJOR=$(node --version 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+    _NODE_MAJOR=$(node --version 2>/dev/null | sed 's/v\([0-9]*\).*/\1/') || true
     if [ -z "$_NODE_MAJOR" ] || [ "$_NODE_MAJOR" -lt 20 ]; then
       echo "   Setting up NodeSource repo for Node.js v22"
       curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - 2>/dev/null || true
