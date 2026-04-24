@@ -176,3 +176,55 @@ Never use a quoted string containing a newline followed by a `#`-prefixed line i
 Never use a backslash immediately before a shell operator (`\|`, `\;`, `\&`, `\<`, `\>`) in Bash commands. It triggers a hardcoded security prompt that cannot be disabled. This includes inside heredocs written via the Bash tool — the scanner checks the entire command string. Use plain operators without escaping.
 
 Never append `2>&1 | head -N` to read-only informational commands (e.g. `jj log`, `jj diff --stat`). It triggers a hardcoded security prompt. Rely on Claude Code's built-in output truncation instead.
+
+## Accessing Google Docs
+
+`WebFetch` returns 401 on Google Docs URLs. Use the Google Docs API with a short-lived access token from `gcloud`:
+
+```shell
+gcloud auth print-access-token
+# then in a second call:
+curl -s -H "Authorization: Bearer <token>" \
+  "https://docs.googleapis.com/v1/documents/<DOC_ID>" -o /tmp/doc.json
+```
+
+Split the `gcloud` and `curl` calls into two Bash invocations — do not use `$(…)` substitution (see "Bash command style" above).
+
+### Tabs
+
+If the URL has a `tab=t.XXXXX` fragment, the doc has tabs. Request tab content explicitly and select the right one:
+
+```shell
+curl -s -H "Authorization: Bearer <token>" \
+  "https://docs.googleapis.com/v1/documents/<DOC_ID>?includeTabsContent=true" -o /tmp/doc.json
+
+jq '[.tabs[] | {tabId: .tabProperties.tabId, title: .tabProperties.title}]' /tmp/doc.json
+# then pull the one tab's body:
+jq '.tabs[] | select(.tabProperties.tabId=="t.XXXXX") | .documentTab.body' /tmp/doc.json
+```
+
+### Extracting content
+
+- Plain paragraphs: `.body.content[].paragraph.elements[].textRun.content`
+- Tables (easy to miss — they sit alongside paragraphs at `body.content[N].table`):
+  ```shell
+  jq -r '.body.content[].table?.tableRows[]?.tableCells[]?.content[]?.paragraph?.elements[]?.textRun?.content'
+  ```
+- Headings are also paragraphs; filter by `.paragraphStyle.namedStyleType` (`HEADING_2`, `HEADING_3`, …).
+
+## Jira custom fields
+
+The "Story Points" field lives at different IDs depending on the project type — writes to the wrong one succeed silently but never show up in the UI.
+
+- **Company-managed (classic) projects**: `customfield_10024` — displayed as "Story Points".
+- **Team-managed (simplified) projects**: `customfield_10016` — displayed as "Story point estimate".
+
+The `project.simplified` boolean on any issue tells you which kind it is. When in doubt, fetch an existing issue with `expand: names` and grep the `names` map for `point` / `estimate` to find the right field ID:
+
+```
+mcp__atlassian__getJiraIssue(..., expand: "names,schema")
+# then:
+jq '.issues.nodes[0].names | to_entries | map(select(.value | test("(?i)point|estimate")))'
+```
+
+After writing any custom field, read it back to confirm — `editJiraIssue` doesn't validate field IDs against the project's field scheme.

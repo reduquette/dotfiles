@@ -80,7 +80,7 @@ install_tools_macos() {
 
   # Symlink brew tools into ~/.local/bin so they're available in
   # non-interactive shells (e.g. Cursor extension host, agent shell).
-  for tool in jj watchman tmux fzf orgstore ddtool atlas buildifier bzl; do
+  for tool in jj watchman tmux fzf orgstore ddtool atlas buildifier bzl gcloud; do
     tool_path="$(brew --prefix)/bin/$tool"
     if [ -x "$tool_path" ] && [ ! -e "$HOME/.local/bin/$tool" ]; then
       ln -sf "$tool_path" "$HOME/.local/bin/$tool"
@@ -191,6 +191,26 @@ install_tools_linux() {
     if ! command -v watchman >/dev/null 2>&1; then
       echo "   Warning: watchman not available (jj fsmonitor will be slower in large repos)"
     fi
+  fi
+
+  # gcloud: Google Cloud SDK apt repo (used by Claude Code to access Google Docs)
+  if ! command -v gcloud >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+      echo "   Installing gcloud CLI from Google Cloud SDK apt repo"
+      sudo apt-get install -y -qq apt-transport-https ca-certificates gnupg curl 2>/dev/null || true
+      curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+        | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg 2>/dev/null || true
+      echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+        | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list >/dev/null
+      sudo apt-get update -qq 2>/dev/null || true
+      sudo apt-get install -y -qq google-cloud-cli 2>/dev/null \
+        && echo "   Installed gcloud CLI" \
+        || echo "   Warning: gcloud install failed"
+    else
+      echo "   Warning: gcloud not installed (no apt-get; see https://cloud.google.com/sdk/docs/install)"
+    fi
+  else
+    echo "   gcloud already installed"
   fi
 
   # DD tools (orgstore, ddtool, atlas): only available via Homebrew.
