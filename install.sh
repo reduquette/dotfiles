@@ -193,7 +193,8 @@ install_tools_linux() {
     fi
   fi
 
-  # gcloud: Google Cloud SDK apt repo (used by Claude Code to access Google Docs)
+  # gcloud: Google Cloud SDK apt repo (used by Claude Code to access Google Drive/Docs/Sheets;
+  # after install, run `gcloud auth login --enable-gdrive-access` once for Drive scope)
   if ! command -v gcloud >/dev/null 2>&1; then
     if command -v apt-get >/dev/null 2>&1; then
       echo "   Installing gcloud CLI from Google Cloud SDK apt repo"
@@ -360,6 +361,22 @@ for _MEMORY_SRC in "$DOTFILES_PATH/.claude/projects/"*/memory; do
     echo "   Symlinked $_SLUG/memory"
   fi
 done
+
+
+echo "==> Verifying gcloud auth (for Claude Code Google Drive/Docs/Sheets access)"
+
+if command -v gcloud >/dev/null 2>&1; then
+  if gcloud auth print-access-token >/dev/null 2>&1; then
+    echo "   gcloud is authenticated"
+  else
+    echo "   gcloud is installed but not authenticated"
+    echo "   Run once (opens a browser; sign in with @datadoghq.com):"
+    echo "     gcloud auth login --enable-gdrive-access"
+    echo "   See: https://datadoghq.atlassian.net/wiki/x/HoCWmAY"
+  fi
+else
+  echo "   Warning: gcloud not installed (see earlier output)"
+fi
 
 
 echo "==> Done"

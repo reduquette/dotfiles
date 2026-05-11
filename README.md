@@ -28,3 +28,16 @@ The install script:
 4. Sets up ddtool credential helpers
 5. Initializes jj in dd-source (if present)
 6. Deploys Cursor rules to project directories
+
+## One-time setup after install
+
+`gcloud` is installed automatically, but the OAuth login needs a browser so it
+can't be scripted. Run once per workspace, then it's cached:
+
+```sh
+gcloud auth login --enable-gdrive-access
+```
+
+This gives Claude Code read access to Google Drive, Docs, and Sheets via
+`gcloud auth print-access-token` (see `CLAUDE.md` → "Accessing Google Docs").
+Wiki: <https://datadoghq.atlassian.net/wiki/x/HoCWmAY>
